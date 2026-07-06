@@ -220,6 +220,44 @@ concurrency: 1
 | `OPENAI_BASE_URL` | API 地址 |
 | `OPENAI_MODEL` | 模型名 |
 
+## 自定义模板
+
+`init` 后会在 `.api-doc-gen/templates/` 生成默认模板，你可以直接修改：
+
+- `api.md.j2` — 接口文档模板
+- `flow.md.j2` — 流程文档模板
+- `VARIABLES.md` — 所有可用变量清单
+
+模板语法使用 [Jinja2](https://jinja.palletsprojects.com/)，示例：
+
+```jinja2
+# {{ title }}
+
+{{ summary }}
+
+## 参数
+
+{% for p in parameters %}
+| {{ p.name }} | {{ p.type }} | {{ "是" if p.required else "否" }} | {{ p.description }} |
+{% endfor %}
+
+## 业务逻辑
+
+{{ business_logic }}
+
+{% if sub_calls %}
+## 调用链
+
+{% for sc in sub_calls %}
+### `{{ sc.method }}`
+- 入参: `{{ sc.input }}`
+- 返回: `{{ sc.output }}`
+{% endfor %}
+{% endif %}
+```
+
+修改模板后直接 `api-doc-gen run`，不需要重新 init。重新 init 不会覆盖已修改的模板。
+
 ## 工作目录
 
 所有产物在 `.api-doc-gen/` 下：
@@ -229,6 +267,10 @@ concurrency: 1
 ├── config.yaml          # 配置
 ├── api-manifest.json    # 接口清单
 ├── task_state.json      # 任务进度
+├── templates/           # 文档模板（可自定义）
+│   ├── api.md.j2        # 接口文档模板
+│   ├── flow.md.j2       # 流程文档模板
+│   └── VARIABLES.md     # 模板变量说明
 └── docs/                # 生成的文档
     ├── _overview.md
     ├── _flows/          # 流程文档（flow 命令生成）

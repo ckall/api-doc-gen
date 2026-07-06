@@ -1,0 +1,79 @@
+{# 流程文档模板 — 可自定义修改 #}
+{# 变量说明见 VARIABLES.md #}
+---
+id: "{{ id }}"
+project: {{ project }}
+system: {{ system }}
+type: flow
+flow_name: {{ flow_name }}
+category: {{ category }}
+role: {{ role }}
+difficulty: {{ difficulty }}
+{% if tags %}tags:
+{% for tag in tags %}  - {{ tag }}
+{% endfor %}{% endif %}
+{% if aliases %}aliases:
+{% for alias in aliases %}  - {{ alias }}
+{% endfor %}{% endif %}
+{% if related_flows %}related_flows:
+{% for rf in related_flows %}  - {{ rf }}
+{% endfor %}{% endif %}
+updated_at: {{ updated_at }}
+---
+
+# {{ title }}
+
+{{ description }}
+
+## 适用角色
+
+{{ role_description }}
+
+## 前置条件
+
+{% for prereq in prerequisites %}- {{ prereq }}
+{% endfor %}
+
+## 操作步骤
+
+{% for step in steps %}
+### 第 {{ step.order }} 步：{{ step.title }}
+
+**操作**：{{ step.action }}
+
+**调用接口**：`{{ step.api_method }} {{ step.api_path }}`{% if step.doc_link %}  
+📄 [查看接口详情]({{ step.doc_link }}){% endif %}
+
+{% if step.key_params %}
+**关键参数**：
+{% for param in step.key_params %}- {{ param }}
+{% endfor %}
+{% endif %}
+
+{% if step.result %}**结果**：{{ step.result }}{% endif %}
+
+{% if step.notes %}> 💡 {{ step.notes }}{% endif %}
+
+---
+
+{% endfor %}
+
+## 注意事项
+
+{% for caution in cautions %}- {{ caution }}
+{% endfor %}
+
+## 常见问题
+
+{% for item in faq %}
+**Q: {{ item.question }}**
+A: {{ item.answer }}
+
+{% endfor %}
+
+## 涉及接口
+
+| 步骤 | 接口 | 说明 | 文档 |
+|------|------|------|------|
+{% for step in steps %}| {{ step.title }} | {{ step.api_method }} {{ step.api_path }} | {{ step.result | default("") }} | {% if step.doc_link %}[详情]({{ step.doc_link }}){% else %}-{% endif %} |
+{% endfor %}

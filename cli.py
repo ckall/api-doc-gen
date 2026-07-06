@@ -142,12 +142,39 @@ def cmd_init(args):
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         yaml.dump(config, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
 
+    # 复制默认模板到 .api-doc-gen/templates/
+    _init_templates()
+
     console.print(f"\n[green]✅ 配置已生成: {CONFIG_FILE}[/green]")
     console.print(f"[dim]   可手动编辑 route_groups（路由分组）和 tag_module_map（模块命名）[/dim]")
+    console.print(f"[dim]   可自定义模板: .api-doc-gen/templates/*.j2（变量说明见 VARIABLES.md）[/dim]")
     console.print(f"\n下一步:")
     console.print(f"   api-doc-gen manifest   # 生成接口清单")
     console.print(f"   api-doc-gen gen        # 快速生成文档（不用AI）")
     console.print(f"   api-doc-gen run        # AI 增强生成文档")
+
+
+def _init_templates():
+    """把默认模板复制到 .api-doc-gen/templates/，用户可自定义修改"""
+    import shutil
+
+    templates_dir = os.path.join(WORK_DIR, "templates")
+    os.makedirs(templates_dir, exist_ok=True)
+
+    # 默认模板来源
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    defaults_dir = os.path.join(script_dir, "templates", "defaults")
+
+    if not os.path.isdir(defaults_dir):
+        return
+
+    for filename in os.listdir(defaults_dir):
+        src = os.path.join(defaults_dir, filename)
+        dst = os.path.join(templates_dir, filename)
+        # 不覆盖用户已修改的模板
+        if not os.path.exists(dst):
+            shutil.copy2(src, dst)
+            console.print(f"[dim]   模板: {dst}[/dim]")
 
 
 def _find_swagger_files(source_root: str) -> list[str]:

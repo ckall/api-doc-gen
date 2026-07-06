@@ -18,6 +18,65 @@ console = Console()
 
 
 # ============================================================
+# 模板渲染工具
+# ============================================================
+
+def _load_user_template(template_name: str) -> str | None:
+    """加载用户自定义模板，找不到返回 None"""
+    work_dir = os.path.join(os.getcwd(), ".api-doc-gen")
+    template_path = os.path.join(work_dir, "templates", template_name)
+    if os.path.isfile(template_path):
+        with open(template_path, "r", encoding="utf-8") as f:
+            return f.read()
+    return None
+
+
+def _render_with_jinja2(template_content: str, entry: dict, config: PipelineConfig) -> str:
+    """使用 Jinja2 模板渲染接口文档"""
+    from jinja2 import Template
+
+    template = Template(template_content, keep_trailing_newline=True)
+
+    # 准备模板变量
+    handler_name = entry.get("handler", "").split(".")[-1] if entry.get("handler") else ""
+    title = handler_name or f"{entry['method']} {entry['path']}"
+
+    variables = {
+        # 基础信息
+        "id": entry["id"],
+        "project": config.project,
+        "system": config.system,
+        "service": config.service,
+        "module": entry.get("module", ""),
+        "group": entry.get("group", ""),
+        "method": entry["method"],
+        "path": entry["path"],
+        "summary": entry.get("enriched_summary", entry.get("summary", "")),
+        "version": config.version,
+        "handler": entry.get("handler", ""),
+        "handler_file": entry.get("handler_file", ""),
+        "route_file": entry.get("route_file", ""),
+        "title": title,
+        "updated_at": date.today().isoformat(),
+        # 列表
+        "tags": entry.get("tags", []),
+        "aliases": entry.get("aliases", []),
+        "related_apis": entry.get("related_apis", []),
+        "parameters": entry.get("parameters", []),
+        "response_fields": entry.get("response_fields", []),
+        # AI 增强
+        "business_logic": entry.get("business_logic", ""),
+        "data_dependencies": entry.get("data_dependencies", {}),
+        "sub_calls": entry.get("sub_calls", []),
+        "business_constraints": entry.get("business_constraints", []),
+        "error_codes": entry.get("error_codes", []),
+        "notes": entry.get("notes", ""),
+    }
+
+    return template.render(**variables)
+
+
+# ============================================================
 # 人工确认节点
 # ============================================================
 
@@ -243,6 +302,12 @@ def render_overview_node(state: PipelineState) -> dict:
 
 def render_enriched_doc(entry: dict, config: PipelineConfig) -> str:
     """渲染增强版接口文档"""
+    # 优先使用用户自定义模板
+    template_content = _load_user_template("api.md.j2")
+    if template_content:
+        return _render_with_jinja2(template_content, entry, config)
+
+    # 回退到内置渲染逻辑
     parts = []
 
     # Frontmatter

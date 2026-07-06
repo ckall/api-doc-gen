@@ -298,11 +298,68 @@ def analyze_flows(config: dict, api_docs: list[dict]) -> list[dict]:
 
 
 # ============================================================
+# 模板渲染工具
+# ============================================================
+
+def _load_user_template(template_name: str) -> str | None:
+    """加载用户自定义模板，找不到返回 None"""
+    work_dir = os.path.join(os.getcwd(), ".api-doc-gen")
+    template_path = os.path.join(work_dir, "templates", template_name)
+    if os.path.isfile(template_path):
+        with open(template_path, "r", encoding="utf-8") as f:
+            return f.read()
+    return None
+
+
+def _render_flow_with_jinja2(template_content: str, flow: dict, config: dict, api_doc_index: dict) -> str:
+    """使用 Jinja2 模板渲染流程文档"""
+    from jinja2 import Template
+
+    template = Template(template_content, keep_trailing_newline=True)
+
+    # 给每个 step 补充 doc_link
+    steps = flow.get("steps", [])
+    for step in steps:
+        api_key = f"{step.get('api_method', '')} {step.get('api_path', '')}"
+        doc_file = api_doc_index.get(api_key, "")
+        step["doc_link"] = f"../{doc_file}" if doc_file else ""
+
+    variables = {
+        "id": f"{config.get('project', '')}::flow::{flow['flow_name']}",
+        "project": config.get("project", ""),
+        "system": config.get("system", ""),
+        "flow_name": flow["flow_name"],
+        "title": flow["title"],
+        "category": flow.get("category", ""),
+        "role": flow.get("role", ""),
+        "difficulty": flow.get("difficulty", "中等"),
+        "description": flow.get("description", ""),
+        "role_description": flow.get("role_description", flow.get("role", "")),
+        "updated_at": date.today().isoformat(),
+        "tags": flow.get("tags", []),
+        "aliases": flow.get("aliases", []),
+        "related_flows": flow.get("related_flows", []),
+        "prerequisites": flow.get("prerequisites", []),
+        "steps": steps,
+        "cautions": flow.get("cautions", []),
+        "faq": flow.get("faq", []),
+    }
+
+    return template.render(**variables)
+
+
+# ============================================================
 # 渲染流程文档
 # ============================================================
 
 def render_flow_doc(flow: dict, config: dict, api_doc_index: dict) -> str:
     """渲染单个流程文档"""
+    # 优先使用用户自定义模板
+    template_content = _load_user_template("flow.md.j2")
+    if template_content:
+        return _render_flow_with_jinja2(template_content, flow, config, api_doc_index)
+
+    # 回退到内置渲染逻辑
     parts = []
 
     # --- YAML frontmatter ---

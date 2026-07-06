@@ -96,6 +96,28 @@ api-doc-gen run --auto
 api-doc-gen run --batch 10 -c 2
 ```
 
+### `api-doc-gen flow`
+
+AI 分析已生成的接口文档，识别业务流程，生成面向终端用户的操作指南。
+
+流程文档中每步操作都会关联对应的接口文档（带链接），形成 **流程 → 接口** 的闭环引用。
+
+```bash
+# 生成流程文档（会先展示识别结果让你确认）
+api-doc-gen flow
+
+# 全自动（跳过确认）
+api-doc-gen flow --auto
+```
+
+生成内容包括：
+- 每个流程的完整操作步骤
+- 每步关联的接口文档链接
+- 前置条件、注意事项、常见问题 (FAQ)
+- 流程总览文档
+
+适用场景：知识库让不懂系统的人也能学会操作。
+
 ### `api-doc-gen status`
 
 查看任务进度（已完成、失败、未处理）。
@@ -177,7 +199,6 @@ GET /api/users
 ```yaml
 project: myapp
 system: 我的系统
-service: my-service
 source_root: /path/to/project
 swagger_path: /path/to/swagger.json
 router_patterns:
@@ -210,6 +231,9 @@ concurrency: 1
 ├── task_state.json      # 任务进度
 └── docs/                # 生成的文档
     ├── _overview.md
+    ├── _flows/          # 流程文档（flow 命令生成）
+    │   ├── _flow_overview.md
+    │   └── 内容管理/
     ├── 管理后台/书籍管理/
     └── 作者端/用户管理/
 ```

@@ -303,8 +303,7 @@ def cmd_run(args):
     pipeline_config = PipelineConfig(
         project=config.get("project", ""),
         system=config.get("system", ""),
-        service=config.get("service", ""),
-        domain=config.get("domain", ""),
+        service=config.get("service", "") or config.get("project", ""),
         version=config.get("version", "v1"),
         source_root=config.get("source_root", "."),
         manifest_path=MANIFEST_FILE,
@@ -380,6 +379,16 @@ def cmd_run(args):
 
     if generated:
         console.print(f"\n[green]输出目录: {OUTPUT_DIR}/[/green]")
+
+
+# ============================================================
+# flow 命令
+# ============================================================
+
+def cmd_flow(args):
+    """AI 分析接口文档，生成用户操作流程指南"""
+    from gen_flows import run_flow_generation
+    run_flow_generation(args, auto=getattr(args, "auto", False))
 
 
 # ============================================================
@@ -530,10 +539,17 @@ def _filter_manifest(manifest: list[dict], args) -> list[dict]:
 # ============================================================
 
 def main():
+    from importlib.metadata import version as pkg_version
+    try:
+        __version__ = pkg_version("api-doc-gen")
+    except Exception:
+        __version__ = "dev"
+
     parser = argparse.ArgumentParser(
         prog="api-doc-gen",
         description="从 Swagger + 源码生成 AI 知识库文档",
     )
+    parser.add_argument("--version", "-V", action="version", version=f"%(prog)s {__version__}")
     subparsers = parser.add_subparsers(dest="command", help="子命令")
 
     # init
@@ -565,6 +581,10 @@ def main():
     # gen（不用 AI，直接从 manifest 生成骨架文档）
     p_gen = subparsers.add_parser("gen", help="直接生成文档（不用 AI，只用 swagger 信息）")
 
+    # flow（AI 分析接口关系，生成操作流程文档）
+    p_flow = subparsers.add_parser("flow", help="AI 分析接口文档，生成用户操作流程指南")
+    p_flow.add_argument("--auto", action="store_true", help="跳过人工确认")
+
     # status
     p_status = subparsers.add_parser("status", help="查看任务状态")
 
@@ -582,6 +602,7 @@ def main():
         "manifest": cmd_manifest,
         "gen": cmd_gen,
         "run": cmd_run,
+        "flow": cmd_flow,
         "status": cmd_status,
         "reset": cmd_reset,
     }

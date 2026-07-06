@@ -19,8 +19,7 @@ class PipelineConfig:
     # 项目信息
     project: str = ""
     system: str = ""
-    service: str = ""
-    domain: str = ""
+    service: str = ""       # 默认等于 project
     version: str = "v1"
 
     # 路径配置
@@ -47,8 +46,7 @@ class PipelineConfig:
         return cls(
             project=data.get("project", ""),
             system=data.get("system", ""),
-            service=data.get("service", ""),
-            domain=data.get("domain", ""),
+            service=data.get("service", "") or data.get("project", ""),
             version=data.get("version", "v1"),
             source_root=data.get("source_root", "."),
             manifest_path=data.get("manifest_file", "output/api-manifest.json"),

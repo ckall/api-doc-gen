@@ -9,10 +9,16 @@ install: ## 安装（用户模式）
 dev: ## 安装（开发模式，可编辑）
 	pip install -e .
 
+reload: clean ## 重新加载（改代码后执行这个）
+	pip install -e .
+	@echo "✅ 已重新加载，api-doc-gen 可用"
+	@api-doc-gen -V
+
 lint: ## 代码检查
 	python -m py_compile cli.py
 	python -m py_compile gen_manifest.py
 	python -m py_compile gen_docs.py
+	python -m py_compile gen_flows.py
 	python -m py_compile pipeline/state.py
 	python -m py_compile pipeline/nodes.py
 	python -m py_compile pipeline/review.py

@@ -3,8 +3,7 @@
 
 project: my-project
 system: 我的系统
-service: my-service
-domain: 业务域
+# service: my-service    # 可选，默认与 project 相同
 version: v1
 
 # 路径配置

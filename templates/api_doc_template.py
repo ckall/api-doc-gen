@@ -32,7 +32,6 @@ id: "{id}"
 project: {project}
 system: {system}
 service: {service}
-domain: {domain}
 module: {module}
 group: {group}
 method: {method}
@@ -101,8 +100,7 @@ FIELD_SPEC = {
     "id":        "唯一标识，格式: {project}::{METHOD}::{path}",
     "project":   "项目标识，如 authorplatform",
     "system":    "所属系统，如 作家后台",
-    "service":   "服务/部署单元名，如 goc-authorplatform",
-    "domain":    "业务域，如 内容运营",
+    "service":   "服务/部署单元名，默认与 project 相同",
     "module":    "功能模块，如 书籍管理",
     "group":     "接口分组/角色，如 管理后台、作者端",
     "method":    "HTTP 方法",
@@ -136,7 +134,6 @@ id: "authorplatform::GET::/admin/book/list"
 project: authorplatform
 system: 作家后台
 service: goc-authorplatform
-domain: 内容运营
 module: 书籍管理
 group: 管理后台
 method: GET

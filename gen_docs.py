@@ -47,16 +47,15 @@ def generate_metadata_yaml(entry: dict, config: dict) -> str:
 
     metadata = {
         "id": entry["id"],
-        "project": config["project"],
-        "system": config["system"],
-        "service": config["service"],
-        "domain": config["domain"],
+        "project": config.get("project", ""),
+        "system": config.get("system", ""),
+        "service": config.get("service", "") or config.get("project", ""),
         "module": entry["module"],
         "group": entry["group"],
         "method": entry["method"],
         "path": entry["path"],
         "summary": entry["summary"],
-        "version": config["version"],
+        "version": config.get("version", "v1"),
         "handler": entry.get("handler", ""),
         "handler_file": entry.get("handler_file", ""),
         "tags": tags,
@@ -252,18 +251,20 @@ def render_overview(manifest: list[dict], config: dict) -> str:
     """生成总览文档"""
     parts = []
 
+    service = config.get("service", "") or config.get("project", "")
+
     # Frontmatter
     parts.append("---")
-    parts.append(f"project: {config['project']}")
-    parts.append(f"system: {config['system']}")
-    parts.append(f"service: {config['service']}")
+    parts.append(f"project: {config.get('project', '')}")
+    parts.append(f"system: {config.get('system', '')}")
+    parts.append(f"service: {service}")
     parts.append(f"type: overview")
     parts.append(f"updated_at: {date.today().isoformat()}")
     parts.append("---")
     parts.append("")
-    parts.append(f"# {config['system']} - API 接口总览")
+    parts.append(f"# {config.get('system', '')} - API 接口总览")
     parts.append("")
-    parts.append(f"服务: `{config['service']}`  ")
+    parts.append(f"服务: `{service}`  ")
     parts.append(f"接口总数: {len(manifest)}")
     parts.append("")
 

@@ -251,7 +251,6 @@ def render_enriched_doc(entry: dict, config: PipelineConfig) -> str:
     parts.append(f"project: {config.project}")
     parts.append(f"system: {config.system}")
     parts.append(f"service: {config.service}")
-    parts.append(f"domain: {config.domain}")
     parts.append(f"module: {entry.get('module', '')}")
     parts.append(f"group: {entry.get('group', '')}")
     parts.append(f"method: {entry['method']}")
@@ -346,6 +345,8 @@ def render_enriched_doc(entry: dict, config: PipelineConfig) -> str:
         data_deps.get("mq_produce"),
         data_deps.get("mq_consume"),
         data_deps.get("http_calls"),
+        data_deps.get("config_reads"),
+        data_deps.get("hardcoded"),
     ])
     if has_deps:
         parts.append("## 数据依赖")
@@ -366,7 +367,10 @@ def render_enriched_doc(entry: dict, config: PipelineConfig) -> str:
             parts.append("### MQ 发送")
             parts.append("")
             for mq in mq_produce:
-                parts.append(f"- → `{mq.get('topic', '')}` / `{mq.get('event', '')}` — {mq.get('trigger', '')}")
+                line = f"- → `{mq.get('topic', '')}` / `{mq.get('event', '')}` — {mq.get('trigger', '')}"
+                if mq.get("payload_summary"):
+                    line += f"（payload: {mq['payload_summary']}）"
+                parts.append(line)
             parts.append("")
 
         # MQ 消费
@@ -385,6 +389,56 @@ def render_enriched_doc(entry: dict, config: PipelineConfig) -> str:
             parts.append("")
             for call in http_calls:
                 parts.append(f"- {call.get('method', 'GET')} `{call.get('service', '')}{call.get('path', '')}` — {call.get('description', '')}")
+            parts.append("")
+
+        # 配置读取
+        config_keys = data_deps.get("config_keys", [])
+        if config_keys:
+            parts.append("### 配置依赖")
+            parts.append("")
+            for ck in config_keys:
+                parts.append(f"- `{ck.get('key', '')}` (文件: {ck.get('config_file', '未知')}) — {ck.get('usage', '')}")
+            parts.append("")
+
+    # 调用链（AI 增强 - 子方法级别，精确到入参/出参/字段操作）
+    sub_calls = entry.get("sub_calls", [])
+    if sub_calls:
+        parts.append("## 调用链")
+        parts.append("")
+        for sc in sub_calls:
+            parts.append(f"### `{sc.get('method', '')}`")
+            parts.append("")
+            parts.append(f"- 文件: `{sc.get('file', '')}`")
+            if sc.get("input"):
+                parts.append(f"- 入参: `{sc['input']}`")
+            if sc.get("output"):
+                parts.append(f"- 返回: `{sc['output']}`")
+            if sc.get("logic"):
+                parts.append(f"- 逻辑: {sc['logic']}")
+
+            # 数据库操作（字段级）
+            for db in sc.get("db_operations", []):
+                condition = f" WHERE {db['condition']}" if db.get("condition") else ""
+                parts.append(f"  - DB {db.get('action', '')}: `{db.get('table', '')}` 字段: {db.get('fields', '')}{condition}")
+
+            # MQ 操作
+            for mq in sc.get("mq_operations", []):
+                topic_info = f"配置key: `{mq['topic_config_key']}`" if mq.get("topic_config_key") else f"topic: {mq.get('topic_source', '')}"
+                parts.append(f"  - MQ {mq.get('action', 'produce')}: {topic_info} / event: `{mq.get('event', '')}` / payload: {mq.get('payload_fields', '')}")
+
+            # HTTP 调用
+            for hc in sc.get("http_calls", []):
+                url_info = f"配置key: `{hc['url_config_key']}`" if hc.get("url_config_key") else hc.get("url_source", "")
+                parts.append(f"  - HTTP {hc.get('method', '')} {url_info} — {hc.get('description', '')}")
+
+            # 配置读取
+            for cr in sc.get("config_reads", []):
+                parts.append(f"  - 读配置: `{cr.get('key', '')}` (文件: {cr.get('config_file', '')}) — {cr.get('usage', '')}")
+
+            # 硬编码值
+            for hv in sc.get("hardcoded_values", []):
+                parts.append(f"  - 硬编码: `{hv.get('value', '')}` → {hv.get('field', '')} ({hv.get('context', '')})")
+
             parts.append("")
 
     # 业务约束（AI 增强）

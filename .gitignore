@@ -1,0 +1,22 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# 工作目录产物
+.api-doc-gen/
+output/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# 环境
+.env
+venv/
+.venv/

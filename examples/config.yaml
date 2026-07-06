@@ -1,0 +1,40 @@
+# 示例配置文件
+# 运行 api-doc-gen init 会自动生成，这里仅作参考
+
+project: my-project
+system: 我的系统
+service: my-service
+domain: 业务域
+version: v1
+
+# 路径配置
+source_root: /path/to/project
+swagger_path: /path/to/project/docs/swagger.json
+
+# 路由文件匹配（相对于 source_root）
+router_patterns:
+  - "router/*.go"          # Go Gin
+  # - "routes/*.ts"        # TypeScript
+  # - "src/routes/*.js"    # Node.js Express
+
+# LLM 配置（也可通过环境变量 OPENAI_API_KEY / OPENAI_BASE_URL / OPENAI_MODEL）
+model: claude-opus-4-8
+base_url: http://localhost:3012/v1
+api_key: sk-xxx
+
+# 运行配置
+batch_size: 5
+concurrency: 1
+auto_approve: false
+max_tool_rounds: 4
+
+# 路由前缀 → 分组映射（可选，优化目录结构）
+route_groups:
+  /admin: 管理后台
+  /api/v1: 公开API
+  /internal: 内部服务
+
+# swagger tag → 模块名映射（可选，统一命名）
+tag_module_map:
+  User: 用户管理
+  Book: 书籍管理

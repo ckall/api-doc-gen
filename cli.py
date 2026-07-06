@@ -63,21 +63,21 @@ def cmd_init(args):
         if not Confirm.ask(f"[yellow]{CONFIG_FILE} 已存在，覆盖？[/yellow]", default=False):
             return
 
-    # 交互式 or 参数式
+    # --- 项目基本信息 ---
     if args.project:
         project = args.project
     else:
-        project = Prompt.ask("项目标识", default=Path(os.getcwd()).name)
+        project = Prompt.ask("项目标识（唯一标识，用于区分不同项目）", default=Path(os.getcwd()).name)
 
     if args.source:
         source_root = args.source
     else:
         source_root = Prompt.ask("项目源码根目录", default=os.getcwd())
 
+    # --- Swagger 文件 ---
     if args.swagger:
         swagger_path = args.swagger
     else:
-        # 自动探测
         swagger_candidates = _find_swagger_files(source_root)
         if swagger_candidates:
             console.print(f"[green]发现 swagger 文件:[/green]")
@@ -91,11 +91,7 @@ def cmd_init(args):
         else:
             swagger_path = Prompt.ask("Swagger 文件路径")
 
-    system = args.system or Prompt.ask("系统名称（如：作家后台）", default=project)
-    service = args.service or Prompt.ask("服务名（如：goc-authorplatform）", default=project)
-    domain = args.domain or Prompt.ask("业务域（如：内容运营）", default="")
-
-    # LLM 配置
+    # --- LLM 配置 ---
     api_key = args.api_key or os.environ.get("OPENAI_API_KEY", "")
     base_url = args.base_url or os.environ.get("OPENAI_BASE_URL", "")
     model = args.model or os.environ.get("OPENAI_MODEL", "claude-opus-4-8")
@@ -103,19 +99,29 @@ def cmd_init(args):
     if not api_key:
         api_key = Prompt.ask("OpenAI API Key", password=True)
     if not base_url:
-        base_url = Prompt.ask("API Base URL（直连OpenAI留空）", default="")
+        base_url = Prompt.ask("API Base URL（直连 OpenAI 留空）", default="")
 
-    # 路由文件模式（自动探测）
+    # --- 路由文件（自动探测）---
     router_patterns = _detect_router_patterns(source_root)
     if not router_patterns:
         pattern_input = Prompt.ask("路由文件 glob 模式", default="router/*.go")
         router_patterns = [pattern_input]
 
+    # --- 项目描述和别名（用于知识库检索）---
+    console.print("\n[cyan]以下信息用于知识库检索，AI 会自动为每个接口生成别名，这里只填项目级别的：[/cyan]")
+    system = args.system or Prompt.ask("项目名称（一句话说明这是什么系统）", default=project)
+
+    # 项目别名：用户可能怎么称呼这个项目
+    aliases_input = Prompt.ask(
+        "项目别名（用户可能怎么称呼，逗号分隔，可留空）",
+        default="",
+    )
+    project_aliases = [a.strip() for a in aliases_input.split(",") if a.strip()]
+
     config = {
         "project": project,
         "system": system,
-        "service": service,
-        "domain": domain,
+        "project_aliases": project_aliases,
         "version": "v1",
         "source_root": source_root,
         "swagger_path": swagger_path,
@@ -128,6 +134,7 @@ def cmd_init(args):
         "concurrency": 1,
         "auto_approve": False,
         "max_tool_rounds": 4,
+        # 以下按需手动编辑
         "route_groups": {},
         "tag_module_map": {},
     }
@@ -136,9 +143,10 @@ def cmd_init(args):
         yaml.dump(config, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
 
     console.print(f"\n[green]✅ 配置已生成: {CONFIG_FILE}[/green]")
-    console.print(f"[dim]   可手动编辑 route_groups 和 tag_module_map 来优化模块分组[/dim]")
+    console.print(f"[dim]   可手动编辑 route_groups（路由分组）和 tag_module_map（模块命名）[/dim]")
     console.print(f"\n下一步:")
     console.print(f"   api-doc-gen manifest   # 生成接口清单")
+    console.print(f"   api-doc-gen gen        # 快速生成文档（不用AI）")
     console.print(f"   api-doc-gen run        # AI 增强生成文档")
 
 
@@ -533,9 +541,7 @@ def main():
     p_init.add_argument("--project", type=str, help="项目标识")
     p_init.add_argument("--source", type=str, help="项目源码根目录")
     p_init.add_argument("--swagger", type=str, help="Swagger 文件路径")
-    p_init.add_argument("--system", type=str, help="系统名称")
-    p_init.add_argument("--service", type=str, help="服务名")
-    p_init.add_argument("--domain", type=str, help="业务域")
+    p_init.add_argument("--system", type=str, help="项目名称/描述")
     p_init.add_argument("--model", type=str, help="LLM 模型名")
     p_init.add_argument("--base-url", type=str, help="API Base URL")
     p_init.add_argument("--api-key", type=str, help="API Key")

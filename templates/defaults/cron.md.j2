@@ -1,0 +1,133 @@
+{# 定时任务文档模板 — 可自定义修改 #}
+{# 变量说明见 VARIABLES.md #}
+---
+id: "{{ id }}"
+project: {{ project }}
+system: {{ system }}
+service: {{ service }}
+type: cron
+module: {{ module }}
+cron_expr: "{{ cron_expr }}"
+func_name: {{ func_name }}
+summary: {{ summary }}
+{% if tags %}tags:
+{% for tag in tags %}  - {{ tag }}
+{% endfor %}{% endif %}
+{% if aliases %}aliases:
+{% for alias in aliases %}  - {{ alias }}
+{% endfor %}{% endif %}
+updated_at: {{ updated_at }}
+---
+
+# {{ title }}
+
+{{ summary }}
+
+## 触发方式
+
+```
+{{ cron_expr }}
+```
+
+{% if cron_readable %}> {{ cron_readable }}{% endif %}
+
+{% if trigger_condition %}
+## 触发条件
+
+{{ trigger_condition }}
+{% endif %}
+
+{% if business_logic %}
+## 业务逻辑
+
+{{ business_logic }}
+{% endif %}
+
+{% if sub_calls %}
+## 调用链
+
+{% for sc in sub_calls %}
+### `{{ sc.method }}`
+
+- 文件: `{{ sc.file }}`
+{% if sc.input %}- 入参: `{{ sc.input }}`{% endif %}
+{% if sc.output %}- 返回: `{{ sc.output }}`{% endif %}
+{% if sc.logic %}- 逻辑: {{ sc.logic }}{% endif %}
+{% for db in sc.db_operations | default([]) %}  - DB {{ db.action }}: `{{ db.table }}` 字段: {{ db.fields }}{% if db.condition %} WHERE {{ db.condition }}{% endif %}
+
+{% endfor %}
+{% for mq in sc.mq_operations | default([]) %}  - MQ {{ mq.action }}: {% if mq.topic_config_key %}配置key: `{{ mq.topic_config_key }}`{% else %}topic: {{ mq.topic_source }}{% endif %} / event: `{{ mq.event }}` / payload: {{ mq.payload_fields | default("") }}
+{% endfor %}
+{% for hc in sc.http_calls | default([]) %}  - HTTP {{ hc.method }} {% if hc.url_config_key %}配置key: `{{ hc.url_config_key }}`{% else %}{{ hc.url_source | default("") }}{% endif %} — {{ hc.description | default("") }}
+{% endfor %}
+{% for cr in sc.config_reads | default([]) %}  - 读配置: `{{ cr.key }}` (文件: {{ cr.config_file | default("") }}) — {{ cr.usage | default("") }}
+{% endfor %}
+{% for hv in sc.hardcoded_values | default([]) %}  - 硬编码: `{{ hv.value }}` → {{ hv.field }} ({{ hv.context | default("") }})
+{% endfor %}
+{% endfor %}
+{% endif %}
+
+{% if data_dependencies %}
+## 数据依赖
+
+{% if data_dependencies.database %}
+### 数据库
+
+{% for op in data_dependencies.database %}- {{ op.operation }}: `{{ op.table }}` {% if op.fields %}字段: {{ op.fields }}{% endif %} — {{ op.description | default("") }}
+{% endfor %}
+{% endif %}
+
+{% if data_dependencies.mq_produce %}
+### MQ 发送
+
+{% for mq in data_dependencies.mq_produce %}- → `{{ mq.topic_config_key | default(mq.topic | default("")) }}` / `{{ mq.event }}` — {{ mq.trigger | default("") }}
+{% endfor %}
+{% endif %}
+
+{% if data_dependencies.http_calls %}
+### HTTP 外部调用
+
+{% for call in data_dependencies.http_calls %}- {{ call.method }} `{{ call.url_config_key | default(call.service | default("")) }}{{ call.path | default("") }}` — {{ call.description | default("") }}
+{% endfor %}
+{% endif %}
+
+{% if data_dependencies.config_keys %}
+### 配置依赖
+
+{% for ck in data_dependencies.config_keys %}- `{{ ck.key }}` (文件: {{ ck.config_file | default("未知") }}) — {{ ck.usage | default("") }}
+{% endfor %}
+{% endif %}
+{% endif %}
+
+{% if business_constraints %}
+## 约束
+
+{% for c in business_constraints %}- {{ c }}
+{% endfor %}
+{% endif %}
+
+{% if error_handling %}
+## 异常处理
+
+{{ error_handling }}
+{% endif %}
+
+{% if related_apis %}
+## 关联接口
+
+{% for r in related_apis %}- {{ r }}
+{% endfor %}
+{% endif %}
+
+{% if source_file %}
+## 源码
+
+- 函数: `{{ func_name }}` → `{{ source_file }}`
+{% if register_file %}- 注册: `{{ register_file }}`{% endif %}
+{% endif %}
+
+{% if notes %}
+## 备注
+
+{{ notes }}
+{% endif %}

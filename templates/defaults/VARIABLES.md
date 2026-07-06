@@ -226,3 +226,96 @@
 ```
 
 完整语法参考：https://jinja.palletsprojects.com/en/3.1.x/templates/
+
+---
+
+## 定时任务模板 (cron.md.j2)
+
+### 基础信息
+
+| 变量 | 类型 | 说明 |
+|------|------|------|
+| `id` | string | 唯一标识，格式: `{project}::cron::{func_name}` |
+| `project` | string | 项目标识 |
+| `system` | string | 系统名称 |
+| `service` | string | 服务名 |
+| `module` | string | 功能模块 |
+| `type` | string | 固定为 `cron` |
+| `cron_expr` | string | cron 表达式 (如 `0 0 3 * * ?`) |
+| `cron_readable` | string | 人类可读描述 (如 "每天凌晨3点执行") |
+| `func_name` | string | 任务函数名 |
+| `title` | string | 文档标题 |
+| `summary` | string | 一句话描述 |
+| `source_file` | string | 源码文件路径 |
+| `register_file` | string | 注册/初始化文件路径 |
+| `updated_at` | string | 最后更新日期 |
+
+### 任务特有
+
+| 变量 | 类型 | 说明 |
+|------|------|------|
+| `trigger_condition` | string | 触发条件说明（除了 cron 表达式外的额外条件） |
+| `error_handling` | string | 异常处理策略 |
+
+### 通用字段
+
+以下字段与接口文档 (api.md.j2) 结构相同：
+
+- `tags`, `aliases` — 同接口文档
+- `business_logic` — 同接口文档
+- `sub_calls` — 同接口文档（入参/出参/DB操作/配置读取等）
+- `data_dependencies` — 同接口文档
+- `business_constraints` — 同接口文档
+- `related_apis` — 关联的接口
+- `notes` — 备注
+
+---
+
+## MQ 消费者模板 (mq.md.j2)
+
+### 基础信息
+
+| 变量 | 类型 | 说明 |
+|------|------|------|
+| `id` | string | 唯一标识，格式: `{project}::consumer::{topic}::{event}` |
+| `project` | string | 项目标识 |
+| `system` | string | 系统名称 |
+| `service` | string | 服务名 |
+| `module` | string | 功能模块 |
+| `type` | string | 固定为 `consumer` |
+| `topic` | string | 消费的 topic 名（实际值或变量名） |
+| `topic_config_key` | string | topic 在配置文件中的 key 路径 |
+| `event` | string | 事件名 |
+| `consumer_group` | string | 消费者组名 |
+| `func_name` | string | 消费函数名 |
+| `title` | string | 文档标题 |
+| `summary` | string | 一句话描述 |
+| `source_file` | string | 源码文件路径 |
+| `register_file` | string | 注册/订阅文件路径 |
+| `updated_at` | string | 最后更新日期 |
+
+### 消费者特有
+
+| 变量 | 类型 | 说明 |
+|------|------|------|
+| `message_schema` | list | 消息体字段结构 |
+| `message_schema[].name` | string | 字段名 |
+| `message_schema[].type` | string | 字段类型 |
+| `message_schema[].description` | string | 字段说明 |
+| `message_body_desc` | string | 消息体的文字描述（无结构化时） |
+| `retry_strategy` | string | 重试策略说明 |
+| `idempotent` | string | 幂等性保证方式 |
+| `error_handling` | string | 异常处理策略 |
+| `producer_apis` | list[string] | 谁在发送这个消息（接口/服务列表） |
+
+### 通用字段
+
+以下字段与接口文档 (api.md.j2) 结构相同：
+
+- `tags`, `aliases` — 同接口文档
+- `business_logic` — 同接口文档
+- `sub_calls` — 同接口文档
+- `data_dependencies` — 同接口文档
+- `business_constraints` — 同接口文档
+- `related_apis` — 关联的接口
+- `notes` — 备注

@@ -119,13 +119,25 @@ def cmd_init(args):
     project_aliases = [a.strip() for a in aliases_input.split(",") if a.strip()]
 
     config = {
+        "config_version": 2,
         "project": project,
         "system": system,
         "project_aliases": project_aliases,
         "version": "v1",
         "source_root": source_root,
-        "swagger_path": swagger_path,
-        "router_patterns": router_patterns,
+        # 入口路径配置（各类型的代码位置）
+        "entrypoints": {
+            "http": {
+                "swagger_path": swagger_path,
+                "router_patterns": router_patterns,
+            },
+            "cron": {
+                "patterns": _detect_cron_patterns(source_root),
+            },
+            "mq": {
+                "patterns": _detect_mq_patterns(source_root),
+            },
+        },
         "output_dir": OUTPUT_DIR,
         "model": model,
         "base_url": base_url,
@@ -209,6 +221,50 @@ def _detect_router_patterns(source_root: str) -> list[str]:
         if found:
             patterns.append(pattern)
             console.print(f"[green]   探测到路由文件: {pattern} ({lang})[/green]")
+    return patterns
+
+
+def _detect_cron_patterns(source_root: str) -> list[str]:
+    """自动探测定时任务文件"""
+    patterns = []
+    checks = [
+        ("task/*.go", "Go cron"),
+        ("cron/*.go", "Go cron"),
+        ("jobs/*.go", "Go jobs"),
+        ("scheduler/*.go", "Go scheduler"),
+        ("cron/*.py", "Python cron"),
+        ("tasks/*.py", "Python/Celery"),
+        ("src/cron/*.ts", "TypeScript cron"),
+        ("src/jobs/*.ts", "TypeScript jobs"),
+    ]
+    for pattern, _ in checks:
+        found = list(Path(source_root).glob(pattern))
+        if found:
+            patterns.append(pattern)
+            console.print(f"[green]   探测到定时任务: {pattern}[/green]")
+    return patterns
+
+
+def _detect_mq_patterns(source_root: str) -> list[str]:
+    """自动探测 MQ 消费者文件"""
+    patterns = []
+    checks = [
+        ("consumer/*.go", "Go consumer"),
+        ("consumers/*.go", "Go consumers"),
+        ("subscriber/*.go", "Go subscriber"),
+        ("mq/*.go", "Go MQ"),
+        ("pkg/mq/*.go", "Go MQ pkg"),
+        ("pkg/queueredis/*.go", "Go Redis Queue"),
+        ("consumer/*.py", "Python consumer"),
+        ("consumers/*.py", "Python consumers"),
+        ("src/consumer/*.ts", "TypeScript consumer"),
+        ("src/subscribers/*.ts", "TypeScript subscriber"),
+    ]
+    for pattern, _ in checks:
+        found = list(Path(source_root).glob(pattern))
+        if found:
+            patterns.append(pattern)
+            console.print(f"[green]   探测到MQ消费者: {pattern}[/green]")
     return patterns
 
 

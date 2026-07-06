@@ -212,6 +212,51 @@ def cmd_manifest(args):
 
 
 # ============================================================
+# gen 命令（不用 AI）
+# ============================================================
+
+def cmd_gen(args):
+    """直接从 manifest 生成骨架文档（不用 AI，速度快）"""
+    config = _load_config()
+    if not config:
+        return
+
+    if not os.path.isfile(MANIFEST_FILE):
+        console.print("[red]❌ 未找到 manifest，请先运行: api-doc-gen manifest[/red]")
+        return
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    sys.path.insert(0, script_dir)
+    from gen_docs import load_manifest, render_api_doc, render_overview, normalize_path_for_filename
+
+    manifest = load_manifest(MANIFEST_FILE)
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+    file_count = 0
+    for entry in manifest:
+        module_dir = os.path.join(OUTPUT_DIR, entry.get("group", "未分类"), entry.get("module", "未分类"))
+        os.makedirs(module_dir, exist_ok=True)
+
+        filename = normalize_path_for_filename(entry["method"], entry["path"]) + ".md"
+        file_path = os.path.join(module_dir, filename)
+
+        content = render_api_doc(entry, config)
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(content)
+        file_count += 1
+
+    # overview
+    overview_content = render_overview(manifest, config)
+    overview_path = os.path.join(OUTPUT_DIR, "_overview.md")
+    with open(overview_path, "w", encoding="utf-8") as f:
+        f.write(overview_content)
+
+    console.print(f"[green]✅ 生成完成（无 AI 模式）[/green]")
+    console.print(f"   {file_count} 个接口文档 + _overview.md")
+    console.print(f"   输出目录: {OUTPUT_DIR}/")
+
+
+# ============================================================
 # run 命令
 # ============================================================
 
@@ -511,6 +556,9 @@ def main():
     p_run.add_argument("--changed", action="store_true", help="只处理未处理过的")
     p_run.add_argument("--retry-failed", action="store_true", help="重跑失败的")
 
+    # gen（不用 AI，直接从 manifest 生成骨架文档）
+    p_gen = subparsers.add_parser("gen", help="直接生成文档（不用 AI，只用 swagger 信息）")
+
     # status
     p_status = subparsers.add_parser("status", help="查看任务状态")
 
@@ -526,6 +574,7 @@ def main():
     commands = {
         "init": cmd_init,
         "manifest": cmd_manifest,
+        "gen": cmd_gen,
         "run": cmd_run,
         "status": cmd_status,
         "reset": cmd_reset,

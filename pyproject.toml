@@ -7,16 +7,15 @@ name = "api-doc-gen"
 version = "0.1.0"
 description = "从 Swagger/OpenAPI + 源码自动生成 AI 知识库友好的 API 文档"
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT"
 requires-python = ">=3.10"
 authors = [
-    {name = "ckall", email = ""},
+    {name = "ckall"},
 ]
 keywords = ["swagger", "openapi", "documentation", "ai", "rag", "knowledge-base"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",

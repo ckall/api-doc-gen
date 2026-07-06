@@ -14,6 +14,12 @@
 ## 安装
 
 ```bash
+# 从 GitHub 直接安装（推荐）
+pip install git+https://github.com/ckall/api-doc-gen.git
+
+# 或者克隆后本地开发安装
+git clone https://github.com/ckall/api-doc-gen.git
+cd api-doc-gen
 pip install -e .
 ```
 

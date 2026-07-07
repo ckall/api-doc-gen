@@ -383,10 +383,17 @@ def resolve_handler_file(handler: str, project_root: str) -> str:
 def build_manifest(config: dict) -> list[dict]:
     """构建完整的 api-manifest"""
     project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    swagger_path = os.path.join(project_root, config["swagger_path"])
+
+    # 兼容新老配置格式
+    entrypoints = config.get("entrypoints", {})
+    http_config = entrypoints.get("http", {})
+    swagger_path_value = http_config.get("swagger_path") or config.get("swagger_path", "")
+    router_patterns = http_config.get("router_patterns") or config.get("router_patterns", [])
+
+    swagger_path = os.path.join(project_root, swagger_path_value)
 
     swagger = load_swagger(swagger_path)
-    route_map = parse_routes(project_root, config["router_patterns"])
+    route_map = parse_routes(project_root, router_patterns)
 
     # 从配置获取项目信息
     project = config["project"]

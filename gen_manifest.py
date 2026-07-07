@@ -85,7 +85,7 @@ def flatten_schema(swagger: dict, schema: dict, prefix: str = "") -> list[dict]:
                 "description": description,
             })
 
-            # 递归展开嵌套 object（只展开一层，避免太深）
+            # 递归展开嵌套结构
             if field_schema.get("type") == "object" or "properties" in field_schema:
                 nested_prefix = full_name if prefix else field_name
                 fields.extend(flatten_schema(swagger, field_schema, nested_prefix))
@@ -94,6 +94,15 @@ def flatten_schema(swagger: dict, schema: dict, prefix: str = "") -> list[dict]:
                 if resolved.get("type") == "object" or "properties" in resolved:
                     nested_prefix = full_name if prefix else field_name
                     fields.extend(flatten_schema(swagger, resolved, nested_prefix))
+            elif field_schema.get("type") == "array":
+                # array 类型：展开 items 内的字段
+                items = field_schema.get("items", {})
+                nested_prefix = (full_name if prefix else field_name) + "[]"
+                if "$ref" in items:
+                    resolved = resolve_ref(swagger, items["$ref"])
+                    fields.extend(flatten_schema(swagger, resolved, nested_prefix))
+                elif items.get("type") == "object" or "properties" in items:
+                    fields.extend(flatten_schema(swagger, items, nested_prefix))
 
         return fields
 

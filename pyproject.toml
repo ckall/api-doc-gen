@@ -42,7 +42,7 @@ Issues = "https://github.com/ckall/api-doc-gen/issues"
 api-doc-gen = "cli:main"
 
 [tool.setuptools]
-py-modules = ["cli", "gen_manifest", "gen_docs", "gen_flows"]
+py-modules = ["cli", "gen_manifest", "gen_docs", "gen_flows", "gen_mcp", "gen_skill"]
 
 [tool.setuptools.packages.find]
 include = ["pipeline*", "templates*"]
